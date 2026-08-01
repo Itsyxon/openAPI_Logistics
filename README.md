@@ -1,32 +1,123 @@
-# React + TypeScript + Vite
+# Аукционы на перевозку
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+SPA для работы с грузовыми аукционами: список, детальная страница, история ставок и установка
+собственной ставки. Бэкенда нет — все четыре эндпоинта эмулируются через MSW, а стор моков
+действительно меняет состояние после мутаций.
 
-Currently, two official plugins are available:
+Источник правды по контрактам — `openapi.auctions.v0.json` в корне репозитория.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Требования
 
-## React Compiler
+- Node.js 20+ (проверялось на 22)
+- npm 8+
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Запуск
 
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Приложение поднимется на http://localhost:5173 и откроет список аукционов.
+
+Service worker MSW регистрируется автоматически при старте в dev-режиме, отдельных действий не
+требуется. Файл воркера лежит в `public/mockServiceWorker.js`.
+
+## Скрипты
+
+| Команда | Что делает |
+| --- | --- |
+| `npm run dev` | Дев-сервер с MSW |
+| `npm run build` | Проверка типов (`tsc -b`) и продакшн-сборка |
+| `npm run preview` | Локальный просмотр собранной версии |
+| `npm run test` | Юнит-тесты (Vitest) |
+| `npm run lint` | Линтер (oxlint) |
+
+В продакшн-сборку MSW не попадает: воркер подключается динамическим импортом только при
+`import.meta.env.DEV`.
+
+## Что посмотреть
+
+| Экран | Адрес |
+| --- | --- |
+| Список аукционов | `/auctions` |
+| Детальная страница | `/auctions/3a05d045-0e67-4f85-b20a-de81d18bb001` |
+| Вкладка ставок | `/auctions/3a05d045-0e67-4f85-b20a-de81d18bb001?tab=bets` |
+| Форма ставки | `/auctions/3a05d045-0e67-4f85-b20a-de81d18bb001/bid` |
+
+Форма ставки — отдельный маршрут, поэтому открывается по прямой ссылке.
+
+### Сценарии для проверки
+
+В моках 12 заявок, подобранных так, чтобы закрыть краевые случаи:
+
+- **Ставка меняет состояние.** Откройте `/auctions/3a05d045-0e67-4f85-b20a-de81d18bb001/bid`,
+  поставьте предложенную цену. После успеха обновятся текущая цена, торговый статус
+  (`Не участвую` → `Лидирую`) и список ставок — это видно и в списке, и на детальной.
+- **Валидация 422.** В той же форме введите цену не кратную шагу или выше доступной — ошибка
+  придёт с сервера моков в формате `application/problem+json` и ляжет на поле.
+- **Ставки запрещены.** Заявка `…bb005` в статусе «Планирование» с `can_set_bet: false`.
+- **История ставок скрыта.** Заявка `…bb006` с `hide_bets_history: true`.
+- **Скрытые адреса, контакты и цена груза.** Заявка `…bb007`.
+- **FixPrice без шага и границ.** Заявка `…bb004`.
+- **Пустая история ставок.** Любая заявка, по которой ещё никто не торговался, например `…bb009`.
+- **Фолбэки search params.** Откройте `/auctions?page=abc&per_page=999&auc_type=["Teleport"]` —
+  страница не упадёт, значения тихо откатятся к безопасным.
+
+## Стек
+
+React 19, TypeScript, Vite, TanStack Router (code-based), TanStack Query, React Hook Form + Zod,
+MSW, Zustand, Tailwind CSS 4 + shadcn/ui.
+
+## Архитектура
+
+Feature-Sliced Design:
+
+```
+src/
+  app/        провайдеры, роутер, корневой layout
+  pages/      auctions, auction-detail, auction-bid
+  widgets/    auctions-board, auction-detail, bets-panel
+  features/   filter-auctions, place-bet, bets-view, auction-actions
+  entities/   auction, bet
+  shared/     api (типы схемы, http-клиент, MSW), config, lib, ui
+```
+
+Импорты идут только вниз по слоям и только через публичные `index.ts` слайсов.
+
+Несколько решений, которые стоит пояснить:
+
+- **Роутер в code-based режиме.** File-based генерирует `routeTree.gen.ts`, который живёт вне
+  слоёв FSD; при code-based маршруты остаются в `app/router`, а страницы — в `pages`.
+- **Фильтры в URL, а не в localStorage.** ТЗ требует Zod-валидацию search params, а она осмысленна
+  именно для URL. Побочный плюс — ссылка на отфильтрованный список шареабельна.
+- **Все параметры в схеме опциональны**, безопасные значения подставляет `normalizeSearch`.
+  Иначе TanStack Router потребовал бы передавать `search` в каждой ссылке на список.
+- **Zustand** держит точечный клиентский UI-state: режим отображения цены (с НДС / без) и показ
+  отменённых ставок. Состояние переживает перезагрузку и общее для списка и вкладки ставок.
+- **Идентификатор аукциона — `main.order_uid`.** Это единственное поле формата uuid в DTO,
+  `main.id` числовой.
+
+## Тесты
+
+```bash
+npm run test
+```
+
+68 тестов на чистую логику и контракты:
+
+- контракты четырёх эндпоинтов через `msw/node` — конверты ответов, `problem+json`, 404, 422,
+  пустое тело у `POST /bets`, изменение состояния стора после ставки;
+- парсинг и фолбэки search params;
+- сборка тела запроса списка;
+- мапперы: выбор основного действия карточки, селекторы ставок, разбор ошибки ставки;
+- схема валидации ставки: обязательность, `> 0`, min/max/step, направление торгов;
+- форматтеры: склонения, деньги, остаток времени.
+
+## Известное ограничение схемы
+
+ТЗ просит показывать на карточке шаг ставки, но в списочном DTO его нет: `AuctionListItemTradingPrice`
+содержит только `start`, `current` и `current_no_vat`. Шаг приходит лишь в детальном
+`AuctionShowTradingPrice`, поэтому на карточке в списке выводятся цена, цена за км и единица
+измерения, а шаг — на детальной странице и в форме ставки. Придумывать значение на списке
+означало бы разойтись с контрактом.
