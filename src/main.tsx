@@ -4,7 +4,8 @@ import { App } from '@/app'
 import './index.css'
 
 async function enableMocking() {
-  if (!import.meta.env.DEV) return
+  if (import.meta.env.VITE_ENABLE_MOCKS === 'false') return
+
   const { startMockWorker } = await import('@/shared/api/mock/browser')
   await startMockWorker()
 }
