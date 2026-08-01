@@ -24,7 +24,7 @@ export function VatModeSwitch({ className }: { className?: string }) {
           onClick={() => setVatMode(mode.value)}
           aria-pressed={vatMode === mode.value}
           className={cn(
-            'rounded-sm px-2 py-0.5 text-xs transition-colors',
+            'cursor-pointer rounded-sm px-2 py-0.5 text-xs transition-colors',
             vatMode === mode.value
               ? 'bg-primary/15 font-medium text-foreground'
               : 'text-muted-foreground hover:text-foreground',
@@ -47,7 +47,7 @@ export function ShowCancelledToggle({ className }: { className?: string }) {
       onClick={toggleCancelled}
       aria-pressed={showCancelled}
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs transition-colors',
+        'inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs transition-colors',
         showCancelled
           ? 'border-primary/45 bg-primary/10 text-foreground'
           : 'text-muted-foreground hover:text-foreground',

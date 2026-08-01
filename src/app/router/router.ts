@@ -44,16 +44,15 @@ const auctionDetailRoute = createRoute({
 })
 
 const auctionBidRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/auctions/$auctionUuid/bid',
+  getParentRoute: () => auctionDetailRoute,
+  path: 'bid',
   component: AuctionBidPage,
 })
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
   auctionsRoute,
-  auctionDetailRoute,
-  auctionBidRoute,
+  auctionDetailRoute.addChildren([auctionBidRoute]),
 ])
 
 export const router = createRouter({

@@ -1,4 +1,4 @@
-import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router'
+import { Link, Outlet, useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
@@ -77,6 +77,8 @@ export function AuctionDetailPage() {
           </TabsContent>
         </Tabs>
       ) : null}
+
+      <Outlet />
     </div>
   )
 }

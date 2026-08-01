@@ -121,7 +121,7 @@ export function PlaceBetForm({ auction, onDone }: Props) {
         </Button>
         <Button
           type='button'
-          variant='ghost'
+          variant='outline'
           onClick={onDone}
           className='sm:flex-1'
         >

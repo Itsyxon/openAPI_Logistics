@@ -42,7 +42,7 @@ export function BoardPagination({ meta, onPageChange }: Props) {
               onClick={() => onPageChange(page)}
               aria-current={page === meta.current_page ? 'page' : undefined}
               className={cn(
-                'num size-9 rounded-md border text-sm transition-colors',
+                'num size-9 cursor-pointer rounded-md border text-sm transition-colors',
                 page === meta.current_page
                   ? 'border-primary bg-primary/12 font-semibold text-foreground'
                   : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground',

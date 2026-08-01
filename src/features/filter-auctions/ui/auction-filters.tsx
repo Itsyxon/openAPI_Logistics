@@ -60,7 +60,7 @@ export function AuctionFilters({ value, onChange, onReset }: Props) {
         <button
           type="button"
           onClick={onReset}
-          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+          className="inline-flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
         >
           <X className="size-3.5" />
           Сбросить фильтры ({activeCount})

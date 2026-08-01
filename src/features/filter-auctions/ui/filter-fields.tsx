@@ -28,7 +28,7 @@ export function ToggleChip({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        'h-9 whitespace-nowrap rounded-md border px-3 text-sm transition-colors',
+        'h-9 cursor-pointer whitespace-nowrap rounded-md border px-3 text-sm transition-colors',
         active
           ? 'border-primary bg-primary/12 text-foreground'
           : 'border-border text-muted-foreground hover:text-foreground',
